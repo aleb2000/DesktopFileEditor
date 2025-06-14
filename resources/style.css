@@ -1,0 +1,114 @@
+@define-color reload-bar-bg-color #ffeabd;
+
+entry.search.search-entry-no-icon image:first-child {
+	opacity: 0;
+}
+
+.sliding-search-entry button.sliding-search-entry-revealed {
+	opacity: 0.69999;
+}
+
+.sliding-search-entry button.sliding-search-entry-revealed:active {
+	background-color: inherit;
+	opacity: 1;
+}
+
+.sliding-search-entry button.sliding-search-entry-revealed:hover {
+	background-color: inherit;
+	opacity: 1;
+}
+
+.reload-bar {
+	padding: 6px;
+	background-color: @reload-bar-bg-color;
+}
+
+.icon_chooser_menu_button {
+	font-weight: normal;
+	min-height: 32px;
+	min-width: 40px;
+	outline-offset: 0px;
+	outline-style: none;
+	padding-bottom: 0px;
+	padding-left: 12px;
+	padding-right: 12px;
+	padding-top: 0px;
+}
+
+
+/* Make the listview look like a listbox */
+
+.entries-list > row.activatable:not(:first-child) {
+	border-top: 1px solid var(--card-shade-color);
+}
+
+.entries-list {
+	background-color: var(--card-bg-color);
+}
+
+scrolledwindow > .entries-list ~ undershoot.top {
+	box-shadow: none;
+	background: none;
+}
+
+/* ListEntryRow styling */
+
+row.taggedentryrow > box {
+	margin-left: 6px;
+	margin-right:  6px;
+	min-height: 50px;
+	padding: 6px;
+}
+
+row.taggedentryrow .locale-emblem {
+	background-color: var(--card-bg-color);
+	border-radius: 9999px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+/* Tag styling */
+
+tag.accent {
+	color: var(--accent-color);
+	--tag-bg-color: color-mix(in srgb, currentColor 15%, transparent);
+	--tag-bg-hover-color: color-mix(in srgb, currentColor 20%, transparent);
+	/*--tag-border-color: color-mix(in srgb, currentColor 50%, transparent);*/
+}
+
+tag {
+	color: var(--card-fg-color);
+	--tag-bg-color: color-mix(in srgb, currentColor 10%, transparent);
+	--tag-bg-hover-color: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+tag .container {
+	padding-left: 6px;
+	padding-right: 6px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+
+	border-radius: 9999px;
+
+	background-color: var(--tag-bg-color);
+}
+
+tag .container:hover {
+	background-color: var(--tag-bg-hover-color);
+}
+
+tag .container text {
+	min-width: 2.2em;
+}
+
+tag .container text placeholder {
+	color: color-mix(in srgb, currentColor 50%, transparent);
+}
+
+tag .container button {
+	min-height: 24px;
+	min-width: 24px;
+	padding: 0;
+}

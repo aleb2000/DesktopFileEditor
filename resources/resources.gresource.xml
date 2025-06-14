@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+	<gresource prefix="/org/argoware/desktop_manager/">
+		<file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+		<file compressed="true" preprocess="xml-stripblanks">list_entry.ui</file>
+		<file compressed="true" preprocess="xml-stripblanks">sliding_search_entry.ui</file>
+		<file compressed="true" preprocess="xml-stripblanks">desktop_file_view.ui</file>
+		<file compressed="true" preprocess="xml-stripblanks">desktop_file_group.ui</file>
+		<file alias="style.css">style.css</file>
+		<file alias="style-dark.css">style-dark.css</file>
+	</gresource>
+</gresources>

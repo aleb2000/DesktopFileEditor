@@ -1,0 +1,127 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $DesktopFileView : Adw.NavigationPage {
+	Adw.ToolbarView {
+		[top]
+		Adw.HeaderBar {
+			[start]
+			Button {
+				label: "Reset";
+				clicked => $on_reset_button_clicked() swapped;
+			}
+
+			[end]
+			Button {
+				label: "Save";
+				sensitive: bind template.content_changed;
+				clicked => $on_save_button_clicked() swapped;
+
+				styles ["suggested-action"]
+			}
+		}
+
+		[bottom]
+		ActionBar {
+			[start]
+			Box {
+				orientation: horizontal;
+				styles ["linked"]
+				
+				Button add_locale_button {
+					tooltip-text: "Add Locale";
+					clicked => $on_add_locale_button_clicked() swapped;
+
+					child: Box {
+						orientation: horizontal;
+						spacing: 6;
+
+						Image {
+							icon-name: "list-add-symbolic";
+						}
+
+						Label {
+							label: "Locale";
+						}
+					};
+				}
+
+				DropDown locale_dropdown {
+					enable-search: true;
+					search-match-mode: substring;
+					tooltip-text: "Locale";
+				}
+			}
+
+			[end]
+			Button add_action_button {
+				tooltip-text: "Add Action";
+				clicked => $on_add_action_button_clicked() swapped;
+				styles ["flat"]
+
+				child: Box {
+					orientation: horizontal;
+					spacing: 6;
+
+					Image {
+						icon-name: "list-add-symbolic";
+					}
+
+					Label {
+						label: "Action";
+					}
+				};
+			}
+		}
+
+		[bottom]
+		Revealer reload_bar {
+			Box {
+				Label {
+					hexpand: true;
+					halign: start;
+					label: "The file was changed by another program.";
+				}
+
+				Button {
+					label: "Discard Changes & Reload";
+					clicked => $on_reload_button_clicked() swapped;
+				}
+
+				styles ["reload-bar", "warning"]
+			}
+		}
+
+		content: ScrolledWindow {
+			Adw.Clamp {
+				margin-end: 12;
+				margin-start: 12;
+				margin-top: 12;
+				margin-bottom: 12;
+				maximum-size: 600;
+				tightening-threshold: 400;
+
+				Box {
+					orientation: vertical;
+					spacing: 36;
+
+					Image image {
+						pixel-size: 128;
+
+						styles ["icon-dropshadow"]
+					}
+
+					$DesktopFileGroup desktop_entry_group {
+						name: "Desktop Entry";
+						show-group-name: false;
+					}
+
+					Box additional_groups {
+						orientation: vertical;
+						spacing: 36;
+					}
+				}
+			}
+		};
+	}
+}

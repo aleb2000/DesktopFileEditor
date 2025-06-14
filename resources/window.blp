@@ -1,0 +1,59 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $DMWindow : Adw.ApplicationWindow {
+	// Minimum size
+	width-request: 240;
+	height-request: 50;
+
+	// Default size
+	default-width: 540;
+	default-height: 600;
+
+	title: _("Desktop Manager");
+
+	content: Adw.NavigationView navigation_view {
+		Adw.NavigationPage {
+			title: "Desktop Manager";
+
+			Adw.ToolbarView toolbar_view {
+				[top]
+				Adw.HeaderBar {
+					$SlidingSearchEntry search_entry {}
+
+					[end]
+					MenuButton {
+						label: "Filters";
+						menu-model: filters_menu_model;
+					}
+				}
+
+				content: Adw.Clamp {
+					child: Box {
+						orientation: vertical;
+						margin-top: 24;
+						margin-bottom: 24;
+						ScrolledWindow {
+							hscrollbar-policy: never;
+							vexpand: true;
+							ListView entries_list {
+								single-click-activate: true;
+								activate => $on_listview_activate() swapped;
+
+								styles ["card", "entries-list"]
+							}
+						}
+					};
+				};
+			}
+		}
+	};
+}
+
+menu filters_menu_model {
+	item ("Only show selected", "win.filter-only-show-selected")
+	section {
+		item ("Hidden", "win.filter-hidden")
+		item ("Errors", "win.filter-invalid")
+	}
+}

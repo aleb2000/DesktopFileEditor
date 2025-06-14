@@ -1,0 +1,40 @@
+{
+	"$schema": "https://raw.githubusercontent.com/mfussenegger/dapconfig-schema/master/dapconfig-schema.json",
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "codelldb",
+			"request": "launch",
+			"name": "Debug executable",
+			"program": "${workspaceFolder}/target/debug/desktop-manager",
+			"args": [],
+			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "cargo build"
+		},
+		{
+			"type": "codelldb",
+			"request": "launch",
+			"name": "Debug executable with test files",
+			"program": "${workspaceFolder}/target/debug/desktop-manager",
+			"args": [
+				"-a",
+				"test_files"
+			],
+			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "cargo build"
+		},
+		{
+			"type": "codelldb",
+			"request": "launch",
+			"name": "Debug executable with only test files",
+			"program": "${workspaceFolder}/target/debug/desktop-manager",
+			"args": [
+				"-i",
+				"-a",
+				"test_files"
+			],
+			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "cargo build"
+		}
+	]
+}

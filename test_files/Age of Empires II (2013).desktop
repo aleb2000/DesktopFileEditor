@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Age of Empires II (2013)
+Comment=Play this game on Steam
+Icon=steam_icon_221380
+Exec=steam steam://rungameid/221380
+Categories=Game;
+Terminal=false
+Type=Application
+

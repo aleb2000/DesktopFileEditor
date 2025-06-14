@@ -1,0 +1,56 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $DesktopFileGroup : Box {
+	orientation: vertical;
+	spacing: 12;
+
+	Box {
+		orientation: horizontal;
+		visible: bind template.show-group-name;
+
+		Label {
+			label: bind template.name;
+			hexpand: true;
+			halign: start;
+			styles ["heading", "h4"]
+		}
+
+		MenuButton {
+			icon-name: "view-more-symbolic";
+			menu-model: group_options_model;
+			styles ["flat"]
+		}
+	}
+
+	ListBox entry_list {
+		selection-mode: none;
+
+		styles ["boxed-list"]
+	}
+}
+
+Adw.ButtonRow new_entry_btn {
+	title: "Add New Entry";
+	start-icon-name: "list-add-symbolic";
+	activated => $on_new_entry_btn_activated() swapped;
+}
+
+menu group_options_model {
+	item ("Edit", "desktop_file_group.edit")
+	item ("Remove", "desktop_file_group.remove")
+}
+
+Adw.AlertDialog edit_dialog {
+	heading: "Edit Action Name";
+
+	extra-child: Entry edit_dialog_entry {
+		changed => $on_edit_dialog_entry_changed() swapped;
+		activate => $on_edit_dialog_entry_activate() swapped;
+	};
+
+	responses [
+		edit_cancel: "Cancel",
+		edit: "Edit" suggested,
+	]
+}

@@ -1,0 +1,77 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $DMListEntry : Box {
+	Box {
+		orientation: horizontal;
+		margin-top: 12;
+		margin-bottom: 12;
+		margin-start: 12;
+		margin-end: 12;
+
+		Image icon_image {
+			icon-size: large;
+			margin-end: 12;
+
+			styles ["icon-dropshadow"]
+		}
+
+		Box {
+			orientation: vertical;
+			spacing: 6;
+			hexpand: true;
+
+			Label name_label {
+				halign: start;
+				ellipsize: end;
+
+				styles ["title"]
+			}
+
+			Label path_label {
+				halign: start;
+				ellipsize: middle;
+
+				styles ["subtitle"]
+			}
+		}
+
+		Box {
+			orientation: horizontal;
+			spacing: 12;
+			margin-start: 12;
+			margin-end: 12;
+
+			Image hidden_marker {
+				pixel-size: 24;
+				icon-name: "view-conceal-symbolic";
+				visible: bind $is_hidden(template.should_show) as <bool>;
+				tooltip-markup: bind $hidden_marker_tooltip_markup(template.should_show) as <string>;
+			}
+
+			Image invalid_marker {
+				pixel-size: 24;
+				icon-name: "dialog-error-symbolic";
+				tooltip-text: "Invalid entry";
+
+				styles ["error"]
+			}
+		}
+	}
+
+	GestureClick {
+		button: 3;
+		released => $on_gestureclick_released() swapped;
+	}
+
+	PopoverMenu context_menu {
+		menu-model: context_menu_model;
+		halign: start;
+		has-arrow: false;
+	}
+}
+
+menu context_menu_model {
+	item ("Open With External Editor", "list_entry.open")
+	item ("Open Item Location", "list_entry.open_location")
+}

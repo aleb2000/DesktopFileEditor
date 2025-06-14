@@ -1,0 +1,32 @@
+using Gtk 4.0;
+
+template $SlidingSearchEntry : Widget {
+	styles ["sliding-search-entry"]
+	layout-manager: BinLayout {};
+
+	Revealer revealer {
+		transition-type: slide_right;
+
+		SearchEntry search_entry {
+			styles ["search-entry-no-icon"]
+			placeholder-text: "Search here...";
+			stop-search => $on_searchentry_stop_search() swapped;
+			changed => $on_searchentry_changed() swapped;
+		}
+	}
+
+	Button button {
+		hexpand: false;
+		halign: start;
+		icon-name: "edit-find-symbolic";
+		focusable: bind revealer.child-revealed inverted;
+		tooltip-text: "Search entries";
+
+		clicked => $on_button_clicked() swapped;
+	}
+
+	EventControllerFocus {
+		leave => $on_eventcontrollerfocus_leave() swapped;
+		enter => $on_eventcontrollerfocus_enter() swapped;
+	}
+}

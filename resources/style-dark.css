@@ -1,0 +1,5 @@
+@define-color reload-bar-bg-color #4e3501;
+
+.reload-bar {
+	background-color: @reload-bar-bg-color;
+}
