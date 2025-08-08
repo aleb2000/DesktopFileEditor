@@ -23,6 +23,7 @@ pub struct Command {
     pub variables: Vec<(String, String)>,
 }
 
+#[cfg(feature = "steam")]
 impl Command {
     const STEAM_ARG_FORMAT: &str = "steam://rungameid/";
     fn find_steam_appid(&self) -> Option<u64> {
@@ -53,6 +54,9 @@ impl Command {
         steamutil::is_app_installed(app_id)
     }
 
+}
+
+impl Command {
     pub fn is_env(&self) -> bool {
         self.command == "env"
     }

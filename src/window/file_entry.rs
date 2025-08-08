@@ -2,8 +2,8 @@
 * Copyright © 2025 Alessandro Balducci
 *
 * This file is part of Desktop File Editor.
-* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
-* GNU General Public License as published by the Free Software Foundation, 
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation,
 * either version 3 of the License, or (at your option) any later version.
 * Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -210,7 +210,12 @@ impl ValidityStatus {
                 // ExecError::WrongFormat(s) => (false, Some(format!("Wrong Exec Format: {s}"))),
                 // ExecError::ExecFieldIsEmpty => (false, Some("Exec field is empty".to_string())),
                 ExecError::ExecParseError => (false, Some("Exec parse error".to_string())),
-                ExecError::SteamAppNotInstalled => (false, Some("Steam app not installed".to_string())),
+
+                #[cfg(feature = "steam")]
+                ExecError::SteamAppNotInstalled => {
+                    (false, Some("Steam app not installed".to_string()))
+                }
+
                 ExecError::ExecFieldNotFound => (true, None),
             },
         };
@@ -254,9 +259,12 @@ impl ValidityStatus {
 fn parse_exec(entry: &DesktopEntry) -> Result<String, ExecError> {
     let exec = entry.exec().ok_or(ExecError::ExecFieldNotFound)?;
     let mut command = shellparse::parse(exec).ok_or(ExecError::ExecParseError)?;
+
+    #[cfg(feature = "steam")]
     if command.is_steam_app() && !command.is_steam_app_installed() {
         return Err(ExecError::SteamAppNotInstalled);
     }
+
     command.flatten_env();
     Ok(command.command)
 }
@@ -264,5 +272,7 @@ fn parse_exec(entry: &DesktopEntry) -> Result<String, ExecError> {
 enum ExecError {
     ExecFieldNotFound,
     ExecParseError,
+
+    #[cfg(feature = "steam")]
     SteamAppNotInstalled,
 }
