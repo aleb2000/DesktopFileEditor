@@ -1,3 +1,16 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
+* GNU General Public License as published by the Free Software Foundation, 
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 use gtk::{gio::Menu, glib::variant::ToVariant};
 
 use crate::desktop_file_view::known_entries::KEYS_DESCRIPTIONS;
@@ -37,13 +50,13 @@ pub fn make_additional_options_menu(key: &str) -> gtk::Widget {
     let menu = Menu::new();
     menu.append(
         Some("Remove"),
-        Some(&format!("desktop_file_group.remove_entry('{}')", key)),
+        Some(&format!("desktop_file_group.remove_entry('{key}')")),
     );
 
     if !remove_only {
         menu.append(
             Some("Description"),
-            Some(&format!("desktop_file_group.show_entry_info('{}')", key)),
+            Some(&format!("desktop_file_group.show_entry_info('{key}')")),
         );
     }
 

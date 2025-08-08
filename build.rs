@@ -2,7 +2,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const APP_NAME: &str = "desktop_manager";
+const APP_NAME: &str = "desktop_file_editor";
 const RES_DIR: &str = "resources";
 
 fn main() {

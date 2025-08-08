@@ -1,3 +1,16 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation,
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 mod icon_entry_row;
 mod new_entry_dialog;
 mod tagged_entry_row;
@@ -30,7 +43,7 @@ static DESKTOP_ACTION_RE: Lazy<Regex> =
 mod imp {
     use crate::desktop_file_view::known_entries::KEYS_DESCRIPTIONS;
     use crate::desktop_file_view::string_entry_row::StringEntryRow;
-    use std::borrow::{Borrow, Cow};
+    use std::borrow::Borrow;
     use std::cell::{Cell, RefCell};
 
     use adw::subclass::prelude::*;
@@ -51,7 +64,7 @@ mod imp {
     use super::RowWidgetExt;
 
     #[derive(CompositeTemplate, Default, Properties)]
-    #[template(resource = "/org/argoware/desktop_manager/desktop_file_group.ui")]
+    #[template(resource = "/org/argoware/desktop_file_editor/desktop_file_group.ui")]
     #[properties(wrapper_type = super::DesktopFileGroup)]
     pub struct DesktopFileGroup {
         #[template_child]
@@ -150,7 +163,7 @@ mod imp {
 
                         // Next row grabs focus
                         if let Some(next_focus_key) = next_focus_key {
-                            println!("Next focus key: {}", next_focus_key);
+                            println!("Next focus key: {next_focus_key}");
                             group.find_entry_widget(&next_focus_key).map(|row| {
                                 glib::idle_add_local_once(move || {
                                     row.grab_focus();
@@ -208,8 +221,7 @@ mod imp {
                                 }
 
                                 Err(e) => eprintln!(
-                                    "Chosen key cannot be added, this is likely a bug: {:?}",
-                                    e
+                                    "Chosen key cannot be added, this is likely a bug: {e:?}"
                                 ),
                             }
                         }
@@ -258,11 +270,9 @@ mod imp {
                     let desktop_entry_cell: &DesktopEntryCell = desktop_entry_rc.borrow();
                     let mut desktop_entry = desktop_entry_cell.borrow_mut();
 
-                    let value = desktop_entry.groups.remove(&Cow::Owned(old_name));
+                    let value = desktop_entry.groups.0.remove(&old_name);
                     if let Some(value) = value {
-                        desktop_entry
-                            .groups
-                            .insert(Cow::Owned(name.to_string()), value);
+                        desktop_entry.groups.0.insert(name.to_string(), value);
                     }
                     desktop_file_view.set_content_changed(true);
                 }
@@ -554,22 +564,25 @@ impl DesktopFileGroup {
             let desktop_entry_cell: &DesktopEntryCell = desktop_entry_rc.borrow();
             let mut desktop_entry = desktop_entry_cell.borrow_mut();
 
-            let group = self.name();
+            let group_name = self.name();
 
-            if key == "X-Ubuntu-Gettext-Domain" && group == "Desktop Entry" {
-                desktop_entry.ubuntu_gettext_domain = Some(value.into());
+            if key == "X-Ubuntu-Gettext-Domain" && group_name == "Desktop Entry" {
+                desktop_entry.ubuntu_gettext_domain = Some(value);
                 return;
             }
 
             desktop_entry
                 .groups
-                .entry(group.to_string().into())
-                .and_modify(|keymap| {
-                    keymap.entry(key.clone().into()).and_modify(
-                        |(unlocalized_value, localized_values)| {
+                .0
+                .entry(group_name)
+                .and_modify(|group| {
+                    group
+                        .0
+                        .entry(key)
+                        .and_modify(|(unlocalized_value, localized_values)| {
                             let original_value = match locale {
                                 Some(ref locale) => {
-                                    localized_values.entry(locale.clone().into()).or_default()
+                                    localized_values.entry(locale.clone()).or_default()
                                 }
                                 None => unlocalized_value,
                             };
@@ -588,21 +601,20 @@ impl DesktopFileGroup {
                                 }
                             }
 
-                            *original_value = value.into();
+                            *original_value = value;
 
                             // If after the change the entry is empty, we can remove it
                             // altogether
                             if let Some(locale) = locale {
                                 if let Entry::Occupied(entry) =
-                                    localized_values.entry(locale.into())
+                                    localized_values.entry(locale)
                                 {
                                     if entry.get().is_empty() {
                                         entry.remove();
                                     }
                                 }
                             }
-                        },
-                    );
+                        });
 
                     // If after the change the entry is empty, we can remove it
                     // altogether

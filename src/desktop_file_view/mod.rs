@@ -1,3 +1,17 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation,
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
+mod add_action_dialog;
 mod add_locale_dialog;
 mod close_confirm_dialog;
 pub mod desktop_entry_ext;
@@ -6,13 +20,8 @@ mod known_entries;
 mod languages;
 mod string_entry_row;
 mod util;
-mod add_action_dialog;
 
-use std::{
-    borrow::Borrow,
-    path::Path,
-    rc::Rc,
-};
+use std::{borrow::Borrow, path::Path, rc::Rc};
 
 use adw::{prelude::*, NavigationPage};
 use gtk::{
@@ -33,7 +42,7 @@ mod imp {
     use gtk::glib::{clone, closure, closure_local, Object, Propagation, SignalHandlerId};
     use gtk::PropertyExpression;
     use notify::{INotifyWatcher, RecursiveMode, Watcher};
-    use std::borrow::{Borrow, Cow};
+    use std::borrow::Borrow;
     use std::cell::Cell;
 
     use std::fs;
@@ -60,10 +69,10 @@ mod imp {
     use super::desktop_file_group::DesktopFileGroup;
     use super::languages::LANGUAGES_LOCALE_MAP;
 
-    pub type DesktopEntryCell = RefCell<DesktopEntry<'static>>;
+    pub type DesktopEntryCell = RefCell<DesktopEntry>;
 
     #[derive(CompositeTemplate, Default, Properties)]
-    #[template(resource = "/org/argoware/desktop_manager/desktop_file_view.ui")]
+    #[template(resource = "/org/argoware/desktop_file_editor/desktop_file_view.ui")]
     #[properties(wrapper_type = super::DesktopFileView)]
     pub struct DesktopFileView {
         #[template_child]
@@ -121,7 +130,6 @@ mod imp {
 
     #[glib::derived_properties]
     impl ObjectImpl for DesktopFileView {
-
         fn dispose(&self) {
             self.dispose_template();
         }
@@ -135,11 +143,11 @@ mod imp {
             self.reset();
 
             if let Err(e) = self.init_file_watcher() {
-                eprintln!("Failed to initialize file watcher: {}", e);
+                eprintln!("Failed to initialize file watcher: {e}");
             };
 
             if let Err(e) = self.start_file_watcher() {
-                eprintln!("Failed to watch desktop file for changes: {}", e);
+                eprintln!("Failed to watch desktop file for changes: {e}");
             };
             let back_confirm_handler = self
                 .parent_navigation_view
@@ -206,13 +214,13 @@ mod imp {
         fn on_save_button_clicked(&self, button: &gtk::Button) {
             {
                 let borrow = self.desktop_entry.borrow();
-                let content: &RefCell<DesktopEntry<'static>> = borrow.as_ref().unwrap().borrow();
+                let content: &RefCell<DesktopEntry> = borrow.as_ref().unwrap().borrow();
                 let content = content.borrow().to_sorted_entry_string();
 
                 let path = self.path.borrow().to_path_buf();
 
                 if let Err(e) = self.stop_file_watcher() {
-                    eprintln!("Failed to stop file watcher before saving: {}", e);
+                    eprintln!("Failed to stop file watcher before saving: {e}");
                 }
 
                 trash::delete(&path).expect("Failed to trash original file");
@@ -220,7 +228,7 @@ mod imp {
                 println!("File {} written!", path.to_string_lossy());
 
                 if let Err(e) = self.start_file_watcher() {
-                    eprintln!("Failed to restart file watcher: {}", e);
+                    eprintln!("Failed to restart file watcher: {e}");
                 }
 
                 button.set_sensitive(false);
@@ -344,13 +352,14 @@ mod imp {
             }
 
             // Repopulate
-            let group_names: Vec<Cow<str>> = {
+            let group_names: Vec<String> = {
                 let some_entry = self.desktop_entry.borrow();
                 let desktop_entry_cell: &DesktopEntryCell = some_entry.as_ref().unwrap().borrow();
                 let desktop_entry = desktop_entry_cell.borrow();
 
                 desktop_entry
                     .groups
+                    .0
                     .keys()
                     .filter(|&group_name| group_name != "Desktop Entry")
                     .cloned()
@@ -376,7 +385,7 @@ mod imp {
                 .chain_closure::<String>(closure!(
                     |_: Option<glib::Object>, locale: &str| {
                         let language = LANGUAGES_LOCALE_MAP.get(locale).unwrap_or(&"");
-                        format!("[{}] {}", locale, language)
+                        format!("[{locale}] {language}")
                     }
                 )),
             ));
@@ -433,14 +442,14 @@ mod imp {
                 notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
                     match res {
                         Ok(event) => {
-                            println!("{:?}", event);
+                            println!("{event:?}");
                             if event.paths.contains(&path_buf) && event.kind.is_modify() {
                                 // This could fail if the channel is full, but we don't care, as we
                                 // only need one message to go through
                                 let _ = sender.try_send(true);
                             }
                         }
-                        Err(e) => eprintln!("file watch error: {:?}", e),
+                        Err(e) => eprintln!("file watch error: {e:?}"),
                     }
                 })?;
 

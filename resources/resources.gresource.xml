@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-	<gresource prefix="/org/argoware/desktop_manager/">
+	<gresource prefix="/org/argoware/desktop_file_editor/">
 		<file compressed="true" preprocess="xml-stripblanks">window.ui</file>
 		<file compressed="true" preprocess="xml-stripblanks">list_entry.ui</file>
 		<file compressed="true" preprocess="xml-stripblanks">sliding_search_entry.ui</file>

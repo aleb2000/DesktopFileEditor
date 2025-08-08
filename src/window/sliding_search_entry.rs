@@ -1,3 +1,16 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
+* GNU General Public License as published by the Free Software Foundation, 
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 use gtk::{
     gdk::{Key, ModifierType},
     glib::{self, clone::Downgrade, closure_local, subclass::types::ObjectSubclassIsExt},
@@ -24,7 +37,7 @@ mod imp {
     };
 
     #[derive(CompositeTemplate, Default)]
-    #[template(resource = "/org/argoware/desktop_manager/sliding_search_entry.ui")]
+    #[template(resource = "/org/argoware/desktop_file_editor/sliding_search_entry.ui")]
     pub struct SlidingSearchEntry {
         #[template_child]
         pub revealer: TemplateChild<Revealer>,

@@ -1,15 +1,28 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
+* GNU General Public License as published by the Free Software Foundation, 
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
-use freedesktop_desktop_entry::{DecodeError, DesktopEntry, ExecError};
+use freedesktop_desktop_entry::{DecodeError, DesktopEntry};
 use gtk::{
     gio,
     glib::{self, subclass::types::ObjectSubclassIsExt, Object},
 };
 
-use crate::desktop_file_view::desktop_entry_ext::NO_LOCALE;
+use crate::{desktop_file_view::desktop_entry_ext::NO_LOCALE, shellparse};
 
 mod imp {
     use adw::prelude::ObjectExt;
@@ -187,16 +200,17 @@ pub struct ValidityStatus {
 }
 
 impl ValidityStatus {
-    pub fn from_desktop_entry(entry: &DesktopEntry<'static>) -> ValidityStatus {
+    pub fn from_desktop_entry(entry: &DesktopEntry) -> ValidityStatus {
         let (exec_ok, exec_fail_reason) = match parse_exec(entry) {
-            Ok(Some(binary)) => match which::which(binary) {
+            Ok(binary) => match which::which(binary) {
                 Ok(_) => (true, None),
                 Err(e) => (false, Some(e.to_string())),
             },
-            Ok(None) => (true, None),
             Err(e) => match e {
-                ExecError::WrongFormat(s) => (false, Some(format!("Wrong Exec Format: {}", s))),
-                ExecError::ExecFieldIsEmpty => (false, Some("Exec field is empty".to_string())),
+                // ExecError::WrongFormat(s) => (false, Some(format!("Wrong Exec Format: {s}"))),
+                // ExecError::ExecFieldIsEmpty => (false, Some("Exec field is empty".to_string())),
+                ExecError::ExecParseError => (false, Some("Exec parse error".to_string())),
+                ExecError::SteamAppNotInstalled => (false, Some("Steam app not installed".to_string())),
                 ExecError::ExecFieldNotFound => (true, None),
             },
         };
@@ -237,16 +251,18 @@ impl ValidityStatus {
     }
 }
 
-fn parse_exec(entry: &DesktopEntry) -> Result<Option<String>, ExecError> {
-    let args = entry.parse_exec()?;
-    for arg in args {
-        // Very simple exec parsing
-        if arg == "env" || arg.contains('=') || arg.starts_with('-') {
-            continue;
-        }
-
-        return Ok(Some(arg));
+fn parse_exec(entry: &DesktopEntry) -> Result<String, ExecError> {
+    let exec = entry.exec().ok_or(ExecError::ExecFieldNotFound)?;
+    let mut command = shellparse::parse(exec).ok_or(ExecError::ExecParseError)?;
+    if command.is_steam_app() && !command.is_steam_app_installed() {
+        return Err(ExecError::SteamAppNotInstalled);
     }
+    command.flatten_env();
+    Ok(command.command)
+}
 
-    Ok(None)
+enum ExecError {
+    ExecFieldNotFound,
+    ExecParseError,
+    SteamAppNotInstalled,
 }

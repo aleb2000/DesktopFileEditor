@@ -1,3 +1,16 @@
+/*
+* Copyright © 2025 Alessandro Balducci
+*
+* This file is part of Desktop File Editor.
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
+* GNU General Public License as published by the Free Software Foundation, 
+* either version 3 of the License, or (at your option) any later version.
+* Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with Desktop File Editor. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 mod entry_filter;
 pub(crate) mod file_entry;
 mod list_entry;
@@ -57,7 +70,7 @@ mod imp {
     use super::sliding_search_entry::SlidingSearchEntry;
 
     #[derive(Debug, Default, CompositeTemplate, Properties)]
-    #[template(resource = "/org/argoware/desktop_manager/window.ui")]
+    #[template(resource = "/org/argoware/desktop_file_editor/window.ui")]
     #[properties(wrapper_type = super::DMWindow)]
     pub struct DMWindow {
         #[template_child]
@@ -162,7 +175,7 @@ mod imp {
         fn init_list(&self) {
             self.load_entries();
             if let Err(e) = self.watch_entries_dirs() {
-                eprintln!("Failed to watch application directories: {}", e);
+                eprintln!("Failed to watch application directories: {e}");
                 eprintln!("The list will not be updated on changes");
             }
 
@@ -275,7 +288,7 @@ mod imp {
                         file_entry.ok()
                     })),
                     Err(e) => {
-                        eprintln!("Failed to scan: {}", e);
+                        eprintln!("Failed to scan: {e}");
                         Either::Right(std::iter::empty())
                     }
                 };
@@ -298,7 +311,7 @@ mod imp {
                         {
                             for path in event.paths.iter() {
                                 if let Err(e) = sender.send_blocking(path.clone()) {
-                                    eprintln!("Error sending application list watch update: {}", e);
+                                    eprintln!("Error sending application list watch update: {e}");
                                 }
                             }
                         }
@@ -316,7 +329,7 @@ mod imp {
                     .watch(&path, notify::RecursiveMode::Recursive);
 
                 if let Err(e) = res {
-                    eprintln!("Failed to watch: {}", e);
+                    eprintln!("Failed to watch: {e}");
                     continue;
                 }
 
