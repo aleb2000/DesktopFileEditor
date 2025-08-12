@@ -23,7 +23,7 @@ mod desktop_file_view;
 mod window;
 mod shellparse;
 
-const APP_ID: &str = "org.argoware.desktop_file_editor";
+const APP_ID: &str = "com.argoware.desktop-file-editor";
 
 fn main() -> glib::ExitCode {
     gio::resources_register_include!("desktop_file_editor.gresource")
