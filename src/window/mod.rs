@@ -2,8 +2,8 @@
 * Copyright © 2025 Alessandro Balducci
 *
 * This file is part of Desktop File Editor.
-* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
-* GNU General Public License as published by the Free Software Foundation, 
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation,
 * either version 3 of the License, or (at your option) any later version.
 * Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -141,7 +141,7 @@ mod imp {
                 let filter_hidden_action = PropertyAction::new("filter-hidden", filter, "hidden");
                 let filter_invalid_action =
                     PropertyAction::new("filter-invalid", filter, "invalid");
-                let filter_only_show_selected_action=
+                let filter_only_show_selected_action =
                     PropertyAction::new("filter-only-show-selected", filter, "only-show-selected");
                 obj.add_action(&filter_hidden_action);
                 obj.add_action(&filter_invalid_action);
@@ -431,7 +431,7 @@ mod imp {
 glib::wrapper! {
     pub struct DMWindow(ObjectSubclass<imp::DMWindow>)
         @extends adw::ApplicationWindow, gtk::ApplicationWindow, gtk::Window, gtk::Widget,
-        @implements gio::ActionGroup, gio::ActionMap;
+        @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
 impl DMWindow {

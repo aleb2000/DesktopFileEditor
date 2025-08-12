@@ -37,16 +37,21 @@ use self::{
 mod imp {
     use adw::subclass::prelude::*;
 
-    use gtk::gio::Cancellable;
+    use gtk::gio::ffi::{g_vfs_get_local, g_vfs_is_active};
+    use gtk::gio::{
+        self, Cancellable, FileCreateFlags, IOErrorEnum, MountMountFlags, MountOperation,
+    };
     use gtk::glib::property::PropertySet;
-    use gtk::glib::{clone, closure, closure_local, Object, Propagation, SignalHandlerId};
+    use gtk::glib::{clone, closure, closure_local, GString, Object, Propagation, SignalHandlerId};
     use gtk::PropertyExpression;
     use notify::{INotifyWatcher, RecursiveMode, Watcher};
     use std::borrow::Borrow;
     use std::cell::Cell;
 
     use std::fs;
+    use std::future::Future;
     use std::path::Path;
+    use std::pin::Pin;
     use std::rc::Rc;
     use std::{cell::RefCell, path::PathBuf};
 
@@ -101,6 +106,9 @@ mod imp {
 
         #[property(get, set, nullable)]
         locale: RefCell<Option<String>>,
+
+        #[property(get, default = false)]
+        mounted_admin_volume: Cell<bool>,
 
         pub desktop_entry: RefCell<Option<Rc<DesktopEntryCell>>>,
 
@@ -211,28 +219,70 @@ mod imp {
     #[gtk::template_callbacks]
     impl DesktopFileView {
         #[template_callback]
-        fn on_save_button_clicked(&self, button: &gtk::Button) {
-            {
+        async fn on_save_button_clicked(&self, button: &gtk::Button) {
+            let content = {
                 let borrow = self.desktop_entry.borrow();
                 let content: &RefCell<DesktopEntry> = borrow.as_ref().unwrap().borrow();
-                let content = content.borrow().to_sorted_entry_string();
+                let content_borrow = content.borrow();
+                content_borrow.to_sorted_entry_string()
+            };
 
-                let path = self.path.borrow().to_path_buf();
+            let path = self.path.borrow().to_path_buf();
 
-                if let Err(e) = self.stop_file_watcher() {
-                    eprintln!("Failed to stop file watcher before saving: {e}");
-                }
-
-                trash::delete(&path).expect("Failed to trash original file");
-                fs::write(&path, content).expect("Failed to write file");
-                println!("File {} written!", path.to_string_lossy());
-
-                if let Err(e) = self.start_file_watcher() {
-                    eprintln!("Failed to restart file watcher: {e}");
-                }
-
-                button.set_sensitive(false);
+            if let Err(e) = self.stop_file_watcher() {
+                eprintln!("Failed to stop file watcher before saving: {e}");
             }
+
+            let file = gio::File::for_path(path);
+            let res = file
+                .replace_contents_future(content.clone(), None, false, FileCreateFlags::NONE)
+                .await;
+
+            if let Err((_, e)) = res {
+                if let Some(IOErrorEnum::PermissionDenied) = e.kind::<IOErrorEnum>() {
+                    // Missing permissions
+                    let admin_uri = format!(
+                        "admin://{}",
+                        file.path()
+                            .expect("File does not have a path?")
+                            .to_string_lossy()
+                    );
+                    let file = gio::File::for_uri(&admin_uri);
+
+                    // Mount admin volume
+                    let res = file
+                        .mount_enclosing_volume_future(MountMountFlags::NONE, MountOperation::NONE)
+                        .await;
+                    if let Err(e) = res {
+                        println!("Failed to mount admin volume: {e}");
+                    }
+
+                    println!("Writing with admin perms");
+                    let res = file
+                        .replace_contents_future(
+                            content.clone(),
+                            None,
+                            false,
+                            FileCreateFlags::NONE,
+                        )
+                        .await;
+                    println!("Finished");
+
+                    if let Err((_, e)) = res {
+                        println!("Failed to write file with admin perms: {e}");
+                    }
+                } else {
+                    println!("Failed to write file: {e}");
+                }
+            }
+
+            println!("Writing finished");
+
+            if let Err(e) = self.start_file_watcher() {
+                eprintln!("Failed to restart file watcher: {e}");
+            }
+
+            button.set_sensitive(false);
 
             self.reset();
         }
@@ -565,6 +615,36 @@ mod imp {
                 ),
             );
         }
+    }
+
+    fn gio_save_file(file: gtk::gio::File, content: String) {
+        file.replace_contents_async(
+            content,
+            None,
+            false,
+            FileCreateFlags::NONE,
+            Cancellable::NONE,
+            |res| {
+                if let Err((s, e)) = res {
+                    if let Some(glib::FileError::Perm) = e.kind::<glib::FileError>() {
+                        println!("Did not obtain permissions to write file");
+                    } else {
+                        println!("s {s}; e {e}");
+                    }
+                }
+            },
+        );
+    }
+
+    type SaveFileFuture = Pin<
+        Box<
+            dyn std::future::Future<Output = Result<(String, glib::GString), (String, glib::Error)>>
+                + 'static,
+        >,
+    >;
+
+    fn gio_save_file_future(file: gtk::gio::File, content: String) -> SaveFileFuture {
+        file.replace_contents_future(content, None, false, FileCreateFlags::NONE)
     }
 }
 

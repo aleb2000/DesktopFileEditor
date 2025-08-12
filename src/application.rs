@@ -20,6 +20,7 @@ use crate::APP_ID;
 
 mod imp {
     use std::cell::{Cell, RefCell};
+    use std::ops::ControlFlow;
 
     use adw::prelude::*;
     use adw::subclass::prelude::*;
@@ -56,7 +57,7 @@ mod imp {
             window.present();
         }
 
-        fn handle_local_options(&self, options: &glib::VariantDict) -> glib::ExitCode {
+        fn handle_local_options(&self, options: &glib::VariantDict) -> ControlFlow<glib::ExitCode> {
             let additional_search_paths = options
                 .lookup::<Vec<String>>("add-search-path")
                 .expect("Failed to lookup option")
@@ -79,7 +80,7 @@ mod imp {
 
 glib::wrapper! {
     pub struct DMApplication(ObjectSubclass<imp::DMApplication>)
-        @extends gio::Application, adw::Application,
+        @extends adw::Application, gtk::Application, gio::Application,
         @implements gio::ActionGroup, gio::ActionMap;
 }
 
