@@ -37,21 +37,17 @@ use self::{
 mod imp {
     use adw::subclass::prelude::*;
 
-    use gtk::gio::ffi::{g_vfs_get_local, g_vfs_is_active};
     use gtk::gio::{
         self, Cancellable, FileCreateFlags, IOErrorEnum, MountMountFlags, MountOperation,
     };
     use gtk::glib::property::PropertySet;
-    use gtk::glib::{clone, closure, closure_local, GString, Object, Propagation, SignalHandlerId};
+    use gtk::glib::{clone, closure, closure_local, Object, Propagation, SignalHandlerId};
     use gtk::PropertyExpression;
     use notify::{INotifyWatcher, RecursiveMode, Watcher};
     use std::borrow::Borrow;
     use std::cell::Cell;
 
-    use std::fs;
-    use std::future::Future;
     use std::path::Path;
-    use std::pin::Pin;
     use std::rc::Rc;
     use std::{cell::RefCell, path::PathBuf};
 
@@ -106,9 +102,6 @@ mod imp {
 
         #[property(get, set, nullable)]
         locale: RefCell<Option<String>>,
-
-        #[property(get, default = false)]
-        mounted_admin_volume: Cell<bool>,
 
         pub desktop_entry: RefCell<Option<Rc<DesktopEntryCell>>>,
 
@@ -220,12 +213,18 @@ mod imp {
     impl DesktopFileView {
         #[template_callback]
         async fn on_save_button_clicked(&self, button: &gtk::Button) {
-            let content = {
+            let write_success = || {
+                button.set_sensitive(false);
+                self.reset();
+            };
+
+            let contents = {
                 let borrow = self.desktop_entry.borrow();
                 let content: &RefCell<DesktopEntry> = borrow.as_ref().unwrap().borrow();
                 let content_borrow = content.borrow();
                 content_borrow.to_sorted_entry_string()
             };
+            let contents = glib::GString::from(contents);
 
             let path = self.path.borrow().to_path_buf();
 
@@ -235,56 +234,44 @@ mod imp {
 
             let file = gio::File::for_path(path);
             let res = file
-                .replace_contents_future(content.clone(), None, false, FileCreateFlags::NONE)
+                .replace_contents_future(contents.clone(), None, false, FileCreateFlags::NONE)
                 .await;
 
-            if let Err((_, e)) = res {
-                if let Some(IOErrorEnum::PermissionDenied) = e.kind::<IOErrorEnum>() {
-                    // Missing permissions
-                    let admin_uri = format!(
-                        "admin://{}",
-                        file.path()
-                            .expect("File does not have a path?")
-                            .to_string_lossy()
-                    );
-                    let file = gio::File::for_uri(&admin_uri);
-
-                    // Mount admin volume
-                    let res = file
-                        .mount_enclosing_volume_future(MountMountFlags::NONE, MountOperation::NONE)
-                        .await;
-                    if let Err(e) = res {
-                        println!("Failed to mount admin volume: {e}");
+            match res {
+                Ok(_) => write_success(),
+                Err((_, e)) => match e.kind::<IOErrorEnum>() {
+                    Some(IOErrorEnum::PermissionDenied) => {
+                        let admin_uri = format!(
+                            "admin://{}",
+                            file.path()
+                                .expect("File does not have a path?")
+                                .to_string_lossy()
+                        );
+                        let file = gio::File::for_uri(&admin_uri);
+                        let res = file
+                            .mount_enclosing_volume_future(
+                                MountMountFlags::NONE,
+                                MountOperation::NONE,
+                            )
+                            .await;
+                        if let Err(e) = res {
+                            println!("Failed to mount admin volume: {e}");
+                        }
+                        let res = file
+                            .replace_contents_future(contents, None, false, FileCreateFlags::NONE)
+                            .await;
+                        match res {
+                            Ok(_) => write_success(),
+                            Err((_, e)) => println!("Failed to write file with admin perms: {e}"),
+                        }
                     }
-
-                    println!("Writing with admin perms");
-                    let res = file
-                        .replace_contents_future(
-                            content.clone(),
-                            None,
-                            false,
-                            FileCreateFlags::NONE,
-                        )
-                        .await;
-                    println!("Finished");
-
-                    if let Err((_, e)) = res {
-                        println!("Failed to write file with admin perms: {e}");
-                    }
-                } else {
-                    println!("Failed to write file: {e}");
-                }
+                    _ => println!("Failed to write file: {e}"),
+                },
             }
-
-            println!("Writing finished");
 
             if let Err(e) = self.start_file_watcher() {
                 eprintln!("Failed to restart file watcher: {e}");
             }
-
-            button.set_sensitive(false);
-
-            self.reset();
         }
 
         #[template_callback]
@@ -535,10 +522,7 @@ mod imp {
                 .as_mut()
                 .map(|watcher| f(watcher, parent_path));
 
-            match res {
-                Some(result) => Ok(result?),
-                None => Ok(()),
-            }
+            res.unwrap_or(Ok(()))
         }
 
         fn start_file_watcher(&self) -> Result<(), notify::Error> {
@@ -615,36 +599,6 @@ mod imp {
                 ),
             );
         }
-    }
-
-    fn gio_save_file(file: gtk::gio::File, content: String) {
-        file.replace_contents_async(
-            content,
-            None,
-            false,
-            FileCreateFlags::NONE,
-            Cancellable::NONE,
-            |res| {
-                if let Err((s, e)) = res {
-                    if let Some(glib::FileError::Perm) = e.kind::<glib::FileError>() {
-                        println!("Did not obtain permissions to write file");
-                    } else {
-                        println!("s {s}; e {e}");
-                    }
-                }
-            },
-        );
-    }
-
-    type SaveFileFuture = Pin<
-        Box<
-            dyn std::future::Future<Output = Result<(String, glib::GString), (String, glib::Error)>>
-                + 'static,
-        >,
-    >;
-
-    fn gio_save_file_future(file: gtk::gio::File, content: String) -> SaveFileFuture {
-        file.replace_contents_future(content, None, false, FileCreateFlags::NONE)
     }
 }
 

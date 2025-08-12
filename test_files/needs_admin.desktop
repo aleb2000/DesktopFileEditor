@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Needs Admin
+Comment=This file is only writable by root
+Exec=echo "Root is the best!"
+Categories=Utility;
+Terminal=true
+Type=Application
+
