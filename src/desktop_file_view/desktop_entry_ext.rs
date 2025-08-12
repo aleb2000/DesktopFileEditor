@@ -66,7 +66,7 @@ fn fixed_order_comparator(fixed_order: &[&str], a: &str, b: &str) -> Ordering {
     }
 }
 
-pub type VecKeyMap<'a> = Vec<(Key, (Value, LocaleMap))>;
+pub type VecKeyMap = Vec<(Key, (Value, LocaleMap))>;
 
 pub trait DesktopEntryExt {
     fn sorted_keymap(&self, group: &str) -> Option<VecKeyMap>;
