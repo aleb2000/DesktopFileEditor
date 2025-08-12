@@ -41,7 +41,7 @@ mod imp {
 
     #[derive(Debug, Default, CompositeTemplate, Properties)]
     #[properties(wrapper_type = super::ListEntry)]
-    #[template(resource = "/org/argoware/desktop_file_editor/list_entry.ui")]
+    #[template(resource = "/com/argoware/desktop-file-editor/list_entry.ui")]
     pub struct ListEntry {
         #[template_child]
         pub name_label: TemplateChild<Label>,

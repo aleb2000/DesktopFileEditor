@@ -70,7 +70,7 @@ mod imp {
     use super::sliding_search_entry::SlidingSearchEntry;
 
     #[derive(Debug, Default, CompositeTemplate, Properties)]
-    #[template(resource = "/org/argoware/desktop_file_editor/window.ui")]
+    #[template(resource = "/com/argoware/desktop-file-editor/window.ui")]
     #[properties(wrapper_type = super::DMWindow)]
     pub struct DMWindow {
         #[template_child]

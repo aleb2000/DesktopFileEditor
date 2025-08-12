@@ -37,7 +37,7 @@ mod imp {
     };
 
     #[derive(CompositeTemplate, Default)]
-    #[template(resource = "/org/argoware/desktop_file_editor/sliding_search_entry.ui")]
+    #[template(resource = "/com/argoware/desktop-file-editor/sliding_search_entry.ui")]
     pub struct SlidingSearchEntry {
         #[template_child]
         pub revealer: TemplateChild<Revealer>,

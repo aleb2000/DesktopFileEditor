@@ -73,7 +73,7 @@ mod imp {
     pub type DesktopEntryCell = RefCell<DesktopEntry>;
 
     #[derive(CompositeTemplate, Default, Properties)]
-    #[template(resource = "/org/argoware/desktop_file_editor/desktop_file_view.ui")]
+    #[template(resource = "/com/argoware/desktop-file-editor/desktop_file_view.ui")]
     #[properties(wrapper_type = super::DesktopFileView)]
     pub struct DesktopFileView {
         #[template_child]

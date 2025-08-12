@@ -64,7 +64,7 @@ mod imp {
     use super::RowWidgetExt;
 
     #[derive(CompositeTemplate, Default, Properties)]
-    #[template(resource = "/org/argoware/desktop_file_editor/desktop_file_group.ui")]
+    #[template(resource = "/com/argoware/desktop-file-editor/desktop_file_group.ui")]
     #[properties(wrapper_type = super::DesktopFileGroup)]
     pub struct DesktopFileGroup {
         #[template_child]
