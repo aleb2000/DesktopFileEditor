@@ -43,7 +43,6 @@ mod imp {
     use zbus::Connection;
 
     use crate::util;
-    use crate::util::display_path;
     use crate::window::file_entry::ShouldShow;
 
     #[derive(Debug, Default, CompositeTemplate, Properties)]
@@ -108,7 +107,7 @@ mod imp {
 
             obj.property_expression("path")
                 .chain_closure::<PathBuf>(closure!(|_: Option<Object>, path: PathBuf| {
-                    display_path(&path)
+                    util::display_path(&path)
                 }))
                 .bind(&obj.path_label(), "label", Widget::NONE);
         }
