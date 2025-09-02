@@ -31,6 +31,8 @@ mod imp {
         StringFilterMatchMode, StringList, StringObject,
     };
 
+    use crate::util::display_path;
+
     const POPOVER_SIZE_SMALL: f64 = 85.0;
     const POPOVER_SIZE_LARGE: f64 = 360.0;
     const POPOVER_ANIM_DURATION: u32 = 325;
@@ -208,7 +210,8 @@ mod imp {
                             obj,
                             move |res| {
                                 if let Ok(res) = res {
-                                    obj.set_text(res.path().unwrap().to_str().unwrap());
+                                    let path = display_path(&res.path().unwrap());
+                                    obj.set_text(path.to_str().unwrap());
                                     obj.activate();
                                 }
                             }

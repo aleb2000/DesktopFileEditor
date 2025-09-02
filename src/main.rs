@@ -22,10 +22,16 @@ mod application;
 mod desktop_file_view;
 mod window;
 mod shellparse;
+mod util;
+#[cfg(feature = "flatpak")]
+mod flatpak;
 
 const APP_ID: &str = "com.argoware.desktop-file-editor";
 
 fn main() -> glib::ExitCode {
+    #[cfg(feature = "flatpak")]
+    flatpak::init();
+
     gio::resources_register_include!("desktop_file_editor.gresource")
         .expect("Failed to register resources");
 

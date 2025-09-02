@@ -64,6 +64,9 @@ mod imp {
     use crate::window::file_entry::ToGIcon;
     use crate::window::file_entry::ValidityStatus;
 
+    #[cfg(feature = "flatpak")]
+    use crate::flatpak;
+
     use super::entry_filter::EntryFilter;
     use super::file_entry::FileEntry;
     use super::list_entry::ListEntry;
@@ -195,7 +198,7 @@ mod imp {
                 list_item
                     .property_expression("item")
                     .chain_property::<FileEntry>("path")
-                    .bind(&entry.path_label(), "label", Widget::NONE);
+                    .bind(&entry, "path", Widget::NONE);
 
                 list_item
                     .property_expression("item")
@@ -343,7 +346,7 @@ mod imp {
             fn find_entry(entries: &ListStore, path: &Path) -> Option<(u32, FileEntry)> {
                 for (i, entry) in entries.iter::<FileEntry>().enumerate() {
                     if let Ok(entry) = entry {
-                        if entry.path() == path {
+                        if entry.path().as_path() == path {
                             return Some((i as u32, entry));
                         }
                     }
@@ -396,7 +399,15 @@ mod imp {
             let application_paths = if self.ignore_default_paths.get() {
                 Either::Left(std::iter::empty())
             } else {
+                #[cfg(feature = "flatpak")]
+                {
+                Either::Right(flatpak::application_paths())
+                }
+
+                #[cfg(not(feature = "flatpak"))]
+                {
                 Either::Right(freedesktop_desktop_entry::default_paths())
+                }
             };
 
             // Add additional search paths

@@ -2,8 +2,8 @@
 * Copyright © 2025 Alessandro Balducci
 *
 * This file is part of Desktop File Editor.
-* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the 
-* GNU General Public License as published by the Free Software Foundation, 
+* Desktop File Editor is free software: you can redistribute it and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation,
 * either version 3 of the License, or (at your option) any later version.
 * Desktop File Editor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,6 +17,8 @@ use gtk::{glib::Object, subclass::prelude::ObjectSubclassIsExt, Image, Label};
 mod imp {
 
     use std::cell::Cell;
+    use std::cell::RefCell;
+    use std::path::PathBuf;
     use std::process::Command;
 
     use adw::glib;
@@ -24,8 +26,10 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::gdk::Rectangle;
 
+    use gtk::glib::closure;
     use gtk::glib::object_subclass;
     use gtk::glib::subclass::InitializingObject;
+    use gtk::glib::Object;
     use gtk::glib::Properties;
     use gtk::glib::Variant;
 
@@ -33,10 +37,12 @@ mod imp {
     use gtk::Image;
     use gtk::Label;
     use gtk::PopoverMenu;
+    use gtk::Widget;
     use gtk::{subclass::prelude::ObjectSubclass, CompositeTemplate};
     use zbus::proxy;
     use zbus::Connection;
 
+    use crate::util::display_path;
     use crate::window::file_entry::ShouldShow;
 
     #[derive(Debug, Default, CompositeTemplate, Properties)]
@@ -63,6 +69,9 @@ mod imp {
 
         #[property(get, set, builder(ShouldShow::default()))]
         pub should_show: Cell<ShouldShow>,
+
+        #[property(get, set)]
+        pub path: RefCell<PathBuf>,
     }
 
     #[object_subclass]
@@ -81,7 +90,7 @@ mod imp {
                 open_item_location_handler,
             );
             klass.install_action("list_entry.open", None, |list_entry, _, _| {
-                let path = list_entry.path_label().label();
+                let path = list_entry.path();
                 let _ = Command::new("xdg-open").arg(path).spawn().unwrap().wait();
             });
         }
@@ -93,6 +102,16 @@ mod imp {
 
     #[glib::derived_properties]
     impl ObjectImpl for ListEntry {
+        fn constructed(&self) {
+            let obj = self.obj();
+
+            obj.property_expression("path")
+                .chain_closure::<PathBuf>(closure!(|_: Option<Object>, path: PathBuf| {
+                    display_path(&path)
+                }))
+                .bind(&obj.path_label(), "label", Widget::NONE);
+        }
+
         fn dispose(&self) {
             self.dispose_template();
         }
@@ -139,7 +158,7 @@ mod imp {
         _: String,
         _: Option<Variant>,
     ) {
-        let path = format!("file://{}", list_entry.path_label().label());
+        let path = format!("file://{}", list_entry.path().to_string_lossy());
         let connection = Connection::session().await.unwrap();
         let proxy = FileManagerInterfaceProxy::new(&connection).await.unwrap();
         proxy.show_items(&[&path], "").await.unwrap();
@@ -161,7 +180,7 @@ impl ListEntry {
         self.imp().name_label.clone()
     }
 
-    pub fn path_label(&self) -> Label {
+    fn path_label(&self) -> Label {
         self.imp().path_label.clone()
     }
 

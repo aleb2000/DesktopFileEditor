@@ -24,6 +24,9 @@ use gtk::{
 
 use crate::{desktop_file_view::desktop_entry_ext::NO_LOCALE, shellparse};
 
+#[cfg(feature = "flatpak")]
+use crate::flatpak;
+
 mod imp {
     use adw::prelude::ObjectExt;
     use gtk::glib::{self, Properties};
@@ -201,8 +204,14 @@ pub struct ValidityStatus {
 
 impl ValidityStatus {
     pub fn from_desktop_entry(entry: &DesktopEntry) -> ValidityStatus {
+        #[cfg(not(feature = "flatpak"))]
+        let binary_search_paths = std::env::var_os("PATH");
+
+        #[cfg(feature = "flatpak")]
+        let binary_search_paths = flatpak::binary_search_paths();
+
         let (exec_ok, exec_fail_reason) = match parse_exec(entry) {
-            Ok(binary) => match which::which(binary) {
+            Ok(binary) => match which::which_in_global(binary, binary_search_paths) {
                 Ok(_) => (true, None),
                 Err(e) => (false, Some(e.to_string())),
             },
