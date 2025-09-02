@@ -8,8 +8,8 @@ use std::{
     path::{Path, PathBuf},
 };
 use zbus::blocking::Connection;
-
-use crate::util::DocumentsInterfaceProxyBlocking;
+use zbus::proxy;
+use std::collections::HashMap;
 
 static DBUS_SESSION_CONNECTION_BLOCKING: Lazy<Connection> =
     Lazy::new(|| Connection::session().expect("Failed to connect to session DBus"));
@@ -101,4 +101,20 @@ pub fn host_path(path: &Path) -> PathBuf {
     }
 
     path.to_path_buf()
+}
+
+#[proxy(
+    interface = "org.freedesktop.portal.Documents",
+    default_service = "org.freedesktop.portal.Documents",
+    default_path = "/org/freedesktop/portal/documents"
+)]
+trait DocumentsInterface {
+    fn add(
+        &self,
+        o_path_fd: zbus::zvariant::OwnedFd,
+        reuse_existing: bool,
+        persistent: bool,
+    ) -> zbus::Result<String>;
+
+    fn get_host_paths(&self, doc_ids: &[&str]) -> zbus::Result<HashMap<String, Vec<u8>>>;
 }
