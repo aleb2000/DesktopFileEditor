@@ -61,11 +61,9 @@ mod imp {
     use notify_debouncer_full::FileIdMap;
 
     use crate::desktop_file_view::DesktopFileView;
+    use crate::util;
     use crate::window::file_entry::ToGIcon;
     use crate::window::file_entry::ValidityStatus;
-
-    #[cfg(feature = "flatpak")]
-    use crate::flatpak;
 
     use super::entry_filter::EntryFilter;
     use super::file_entry::FileEntry;
@@ -399,15 +397,7 @@ mod imp {
             let application_paths = if self.ignore_default_paths.get() {
                 Either::Left(std::iter::empty())
             } else {
-                #[cfg(feature = "flatpak")]
-                {
-                Either::Right(flatpak::application_paths())
-                }
-
-                #[cfg(not(feature = "flatpak"))]
-                {
-                Either::Right(freedesktop_desktop_entry::default_paths())
-                }
+                Either::Right(util::application_paths())
             };
 
             // Add additional search paths
