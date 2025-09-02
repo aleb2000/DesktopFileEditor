@@ -42,6 +42,7 @@ mod imp {
     use zbus::proxy;
     use zbus::Connection;
 
+    use crate::util;
     use crate::util::display_path;
     use crate::window::file_entry::ShouldShow;
 
@@ -158,10 +159,11 @@ mod imp {
         _: String,
         _: Option<Variant>,
     ) {
-        let path = format!("file://{}", list_entry.path().to_string_lossy());
+        let path = util::display_path(&list_entry.path());
+        let uri = format!("file://{}", path.to_string_lossy());
         let connection = Connection::session().await.unwrap();
         let proxy = FileManagerInterfaceProxy::new(&connection).await.unwrap();
-        proxy.show_items(&[&path], "").await.unwrap();
+        proxy.show_items(&[&uri], "").await.unwrap();
     }
 }
 
